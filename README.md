@@ -20,3 +20,9 @@
 ```
  elgamal::generate_pub_key(&BigInt::from(3989),32,32);
 ```
+
+## Cargo doc
+### This project support cargo doc, you should tap words in Terminal like below:
+```
+  cargo doc --open
+```
