@@ -10,6 +10,17 @@ mod tests {
     }
 }
 
+
+/// elgamal mod
+/// this is a utils for elgamal security algorithm
+/// use for generating public_key
+/// ```rust
+/// # use elgamal_capsule::elgamal;
+/// let big_num = BigInt::from(2929);
+/// let tuple = elgamal::generate_pub_key(&big_num,32,32);
+/// let pubkey = tuple.0;
+/// let mt19937 = tuple.1;
+/// ```
 pub mod elgamal {
     use crate::elgamal_utils;
     use mt19937;
@@ -22,46 +33,44 @@ pub mod elgamal {
         println!("test function suc");
     }
 
+    ///Init public key structure for elgamal encryption.
+    ///
+    ///             Args:
+    ///                 p: a large prime number
+    ///                 g: a generator
+    ///                 h:
+    ///                 bit_length: bit length of the prime number
     #[derive(Debug)]
     pub struct PublicKey {
         pub p: BigInt,
         pub g: BigInt,
         pub h: BigInt,
         pub bit_length: u32,
-        /*Init public key structure for elgamal encryption.
-
-            Args:
-                p: a large prime number
-                g: a generator
-                h:
-                bit_length: bit length of the prime number
-            */
     }
 
+    ///init private key structure for elgamal encryption.
+    ///
+    ///             Args:
+    ///                 p: a large prime number
+    ///                 g: a generator
+    ///                 x: a randomly chosen key
+    ///                 bit_length: bit length of the prime number
     #[derive(Debug)]
     pub struct PrivateKey {
         pub p: BigInt,
         pub g: BigInt,
         pub x: BigInt,
-        /*Init private key structure for elgamal encryption.
-
-            Args:
-                p: a large prime number
-                g: a generator
-                x: a randomly chosen key
-                bit_length: bit length of the prime number
-            */
     }
 
     impl PublicKey {
-        //print public_key's p、g、h
+        ///print public_key's p、g、h
         pub fn print_parameter(&self) {
             println!("_____________");
             println!("p:{}", self.p);
             println!("g:{}", self.g);
             println!("h:{}", self.h);
         }
-        //Generate a public key from string.
+        ///Generate a public key from string.
         pub fn from_hex_str(key_str:&str)->PublicKey{
             let keys:Vec<_> = key_str.split(", ").collect();
             println!("keys~~~~~~~~~~~~~~~~{:?}",keys);
@@ -81,23 +90,21 @@ pub mod elgamal {
         }
     }
 
-    //generate public_key with seed、bit_length、i_confidence
+    ///generate public_key with seed、bit_length、i_confidence
+    ///Generates public key K1 (p, g, h) and private key K2 (p, g, x).
+    ///
+    ///         Args:
+    ///             seed:
+    ///             bit_length:
+    ///             i_confidence:
+    ///
+    ///         Returns:
+    ///
+    ///          p is the prime
+    ///          g is the primitive root
+    ///          x is random in (0, p-1) inclusive
+    ///          h = g ^ x mod p
     pub fn generate_pub_key(seed: &BigInt, bit_length: u32, i_confidence: u32) -> (PublicKey, mt19937::MT19937) {
-        /*
-        Generates public key K1 (p, g, h) and private key K2 (p, g, x).
-
-        Args:
-            seed:
-            bit_length:
-            i_confidence:
-
-        Returns:
-
-         p is the prime
-         g is the primitive root
-         x is random in (0, p-1) inclusive
-         h = g ^ x mod p
-         */
         let key = seed.to_u32_digits();
         let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
         let val = elgamal_utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
@@ -115,16 +122,15 @@ pub mod elgamal {
         (pubkey,rng)
     }
 
+    ///Encrypts a string using the public key k.
+    ///
+    ///         Args:
+    ///             key: public key for encryption
+    ///             s_plaintext: input message string
+    ///
+    ///         Returns:
+    ///             Encrypted text string.
     pub fn encrypt<R: rand_core::RngCore>(key:&PublicKey,s_plaintext:&str,rng:&mut R) -> String{
-        /*Encrypts a string using the public key k.
-
-        Args:
-            key: public key for encryption
-            s_plaintext: input message string
-
-        Returns:
-            Encrypted text string.
-        */
         let z = encode_utf16(s_plaintext, key.bit_length);
         // cipher_pairs list will hold pairs (c, d) corresponding to each integer in z
         let mut cipher_pairs = vec!();
@@ -156,20 +162,19 @@ pub mod elgamal {
         encrypted_str
     }
 
+    ///Encodes bytes to integers mod p.
+    ///         Example
+    ///         if n = 24, k = n / 8 = 3
+    ///         z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
+    ///         where m[i] is the ith message byte
+    ///
+    ///         Args:
+    ///             s_plaintext: String text to be encoded
+    ///             bit_length: bit length of the prime number
+    ///
+    ///         Returns:
+    ///             A list of encoded integers
     pub fn encode_utf16(s_plaintext:&str,bit_length:u32) -> Vec<BigInt>{
-        /*Encodes bytes to integers mod p.
-        Example
-        if n = 24, k = n / 8 = 3
-        z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
-        where m[i] is the ith message byte
-
-        Args:
-            s_plaintext: String text to be encoded
-            bit_length: bit length of the prime number
-
-        Returns:
-            A list of encoded integers
-        */
         let mut byte_array:Vec<u8> = UTF_16LE.encode(s_plaintext, EncoderTrap::Strict).unwrap();
         byte_array.insert(0, 254);
         byte_array.insert(0, 255);
@@ -203,6 +208,11 @@ pub mod elgamal {
     }
 }
 
+///elgamal_utils mod
+/// use for supporting elgamal public_key generating
+/// generate p: a big prime
+/// generate g: a prime root
+/// generate h: a random from seed
 pub mod elgamal_utils{
     #![allow(clippy::unreadable_literal, clippy::upper_case_acronyms)]
     use mt19937::MT19937;
@@ -269,21 +279,21 @@ pub mod elgamal_utils{
         BigInt::from_biguint(sign, uint)
     }
 
+    ///Find a prime number p for elgamal public key.
+    ///
+    ///             Args:
+    ///             bit_length: number of binary bits for the prime number.
+    ///             i_confidence:
+    ///             seed: random generator seed
+    ///
+    ///         Returns:
+    ///             A prime number with requested length of bits in binary.
     #[allow(unused)]
     pub fn random_prime_bigint(
         bit_length: u32,
         i_confidence: u32,
         r: &mut mt19937::MT19937,
     ) -> BigInt {
-        /*Find a prime number p for elgamal public key.
-
-            Args:
-            bit_length: number of binary bits for the prime number.
-            i_confidence:
-            seed: random generator seed
-
-        Returns:
-            A prime number with requested length of bits in binary.*/
         let zero: BigInt = Zero::zero();
         //keep testing until one is found
         loop {
@@ -322,20 +332,19 @@ pub mod elgamal_utils{
         p
     }
 
+    ///Finds a primitive root for prime p.
+    ///         This function was implemented from the algorithm described here:
+    ///         http://modular.math.washington.edu/edu/2007/spring/ent/ent-html/node31.html
+    ///
+    ///         Args:
+    ///             p:
+    ///             seed:
+    ///
+    ///         Returns:
+    ///             A primitive root for prime p.
+    /// the prime divisors of p-1 are 2 and (p-1)/2 because
+    /// p = 2x + 1 where x is a prime
     pub fn find_primitive_root_bigint(p: &BigInt,r: &mut mt19937::MT19937) -> BigInt {
-        /*Finds a primitive root for prime p.
-        This function was implemented from the algorithm described here:
-        http://modular.math.washington.edu/edu/2007/spring/ent/ent-html/node31.html
-
-        Args:
-            p:
-            seed:
-
-        Returns:
-            A primitive root for prime p.
-        */
-        // the prime divisors of p-1 are 2 and (p-1)/2 because
-        // p = 2x + 1 where x is a prime
         let one: BigInt = One::one();
         let two: BigInt = &one + &one;
         if *p == two {
@@ -369,22 +378,22 @@ pub mod elgamal_utils{
         h
     }
 
+    /// Solovay-strassen primality test.
+    ///     This function tests if num is prime.
+    ///     http://www-math.ucdenver.edu/~wcherowi/courses/m5410/ctcprime.html
+    ///
+    ///     Args:
+    ///     num: input integer
+    /// i_confidence:
+    ///
+    ///     Returns:
+    /// if pass the test
+    /// ensure confidence of t
     pub fn solovay_strassen(num: &BigInt, i_confidence: u32, r: &mut MT19937) -> bool {
-        // Solovay-strassen primality test.
-        //     This function tests if num is prime.
-        //     http://www-math.ucdenver.edu/~wcherowi/courses/m5410/ctcprime.html
-        //
-        //     Args:
-        //     num: input integer
-        // i_confidence:
-        //
-        //     Returns:
-        // if pass the test
-        // ensure confidence of t
         for _idx in 0..i_confidence {
             let one: BigInt = One::one();
             let high: BigInt = num - &one;
-            // choose random a between 1 and n-2
+            //choose random a between 1 and n-2
             let a: BigInt = gen_bigint_range(r, &one, &high);
 
             let two: BigInt = &one +&one;
@@ -392,7 +401,7 @@ pub mod elgamal_utils{
             if a.gcd(num) > one {
                 return false;
             }
-            // declares n prime if jacobi(a, n) is congruent to a^((n-1)/2) mod n
+            //declares n prime if jacobi(a, n) is congruent to a^((n-1)/2) mod n
             let jacobi_result: BigInt = jacobi(&a, num).mod_floor(num);
             let mi: BigInt = (num - &one) / &two;
             let pow_reulst: BigInt = a.modpow(&mi, num);
@@ -400,18 +409,18 @@ pub mod elgamal_utils{
                 return false;
             }
         }
-        // if there have been t iterations without failure, num is believed to be prime
+        //if there have been t iterations without failure, num is believed to be prime
         return true;
     }
 
+    /// Computes the jacobi symbol of a, n.
+    ///
+    ///     Args:
+    ///     a:
+    ///     n:
+    ///
+    ///     Returns:
     pub fn jacobi(a: &BigInt, n: &BigInt) -> BigInt {
-        // Computes the jacobi symbol of a, n.
-        //
-        //     Args:
-        //     a:
-        //     n:
-        //
-        //     Returns:
         let bigint_0 = Zero::zero();
         let bigint_1 = One::one();//to_bigint_from_int(1);
         let bigint_2 = to_bigint_from_int(2);
