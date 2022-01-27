@@ -7,7 +7,7 @@ mod tests {
     }
 }
 
-mod elgamal {
+pub mod elgamal {
     pub fn test_fn(){
         println!("test function suc");
     }
