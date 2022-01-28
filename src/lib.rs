@@ -421,50 +421,58 @@ pub mod elgamal_utils{
     ///
     ///     Returns:
     pub fn jacobi(a: &BigInt, n: &BigInt) -> BigInt {
-        let bigint_0 = Zero::zero();
-        let bigint_1 = One::one();//to_bigint_from_int(1);
-        let bigint_2 = to_bigint_from_int(2);
-        let bigint_r1 = to_bigint_from_int(-1);
-        let bigint_3 = to_bigint_from_int(3);
-        let bigint_4 = to_bigint_from_int(4);
-        let bigint_5 = to_bigint_from_int(5);
-        let bigint_7 = to_bigint_from_int(7);
-        let bigint_8 = to_bigint_from_int(8);
-        if a == &bigint_0 {
-            if n == &bigint_1 {
-                return bigint_1;
-            } else {
-                return bigint_0;
+        let bigint_0: BigInt = Zero::zero();
+        let bigint_1: BigInt = One::one();
+        let bigint_2: BigInt = to_bigint_from_int(2);
+        let bigint_r1: BigInt = to_bigint_from_int(-1);
+        let bigint_3: BigInt = to_bigint_from_int(3);
+        let bigint_4: BigInt = to_bigint_from_int(4);
+        let bigint_5: BigInt = to_bigint_from_int(5);
+        let bigint_7: BigInt = to_bigint_from_int(7);
+        let bigint_8: BigInt = to_bigint_from_int(8);
+        return match a {
+            a if a == &bigint_0 => {
+                if n == &bigint_1 {
+                    bigint_1.clone()
+                } else {
+                    bigint_0.clone()
+                }
+            },
+            a if a == &bigint_r1 => {
+                if n.mod_floor(&bigint_2) == bigint_0 {
+                    bigint_1.clone()
+                } else {
+                    bigint_r1.clone()
+                }
+            },
+            a if a == &bigint_1 => {
+                bigint_1.clone()
+            },
+            a if a == &bigint_2 => {
+                if (n.mod_floor(&bigint_8) == bigint_1) || (n.mod_floor(&bigint_8) == bigint_7) {
+                    bigint_1.clone()
+                } else if (n.mod_floor(&bigint_8) == bigint_3) || (n.mod_floor(&bigint_8) == bigint_5) {
+                    bigint_r1.clone()
+                } else {
+                    bigint_0.clone()
+                }
+            },
+            a if a >= n =>{
+                let tmp_a = a.mod_floor(n);
+                jacobi(&tmp_a, n)
+            },
+            a if a.mod_floor(&bigint_2) == bigint_0 =>{
+                let tmp_a2 = a / &bigint_2;
+                jacobi(&bigint_2, n) * jacobi(&tmp_a2, n)
+            },
+            _ => {
+                if (a.mod_floor(&bigint_4) == bigint_3) && (n.mod_floor(&bigint_4) == bigint_3) {
+                    bigint_r1 * jacobi(n, a)
+                } else {
+                    jacobi(n, a)
+                }
             }
-        } else if a == &bigint_r1 { //property 1 of the jacobi symbol
-            if n.mod_floor(&bigint_2) == bigint_0 {
-                return bigint_1;
-            } else {
-                return bigint_r1;
-            }
-        } else if a == &bigint_1 {// if a == 1, jacobi symbol is equal to 1
-            return bigint_1;
-        } else if a == &bigint_2 {// property 4 of the jacobi symbol
-            if (n.mod_floor(&bigint_8) == bigint_1) || (n.mod_floor(&bigint_8) == bigint_7) {
-                return bigint_1;
-            } else if (n.mod_floor(&bigint_8) == bigint_3) || (n.mod_floor(&bigint_8) == bigint_5) {
-                return bigint_r1;
-            } else {
-                return bigint_0;
-            }
-        } else if a >= n { // property of the jacobi symbol ,if a = b mod n, jacobi(a, n) = jacobi( b, n )
-            let tmp_a = a.mod_floor(n);
-            return jacobi(&tmp_a, n);
-        } else if a.mod_floor(&bigint_2) == bigint_0 {
-            let tmp_a2 = a / &bigint_2;
-            return jacobi(&bigint_2, n) * jacobi(&tmp_a2, n);
-        } else {// law of quadratic reciprocity, if a is odd and a is co-prime to n
-            if (a.mod_floor(&bigint_4) == bigint_3) && (n.mod_floor(&bigint_4) == bigint_3) {
-                return bigint_r1 * jacobi(n, a);
-            } else {
-                return jacobi(n, a);
-            }
-        }
+        };
     }
 
     pub fn pow_mod_bigint(base: &BigInt, exponent: &BigInt, modulus: &BigInt) -> BigInt {
