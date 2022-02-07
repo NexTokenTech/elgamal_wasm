@@ -11,3 +11,4 @@ num = { version = "0.3.1", features = ["rand"] }
 mt19937 = "2.0.1"
 rand = { version = "0.6", default-features = false, optional = true }
 rand_core = { version = "0.6", features = ["std"] }
+const_num_bigint = "0.2.1"
