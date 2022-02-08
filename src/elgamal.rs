@@ -42,7 +42,7 @@ impl KeyFormat for PublicKey {
     /// ~~~
     /// use elgamal_wasm::elgamal::PublicKey;
     /// use elgamal_wasm::elgamal::KeyFormat;
-    /// let pub_key:PublicKey = PublicKey::from_hex_str("0x3839993 0x3838388 0x333444 32");
+    /// let pub_key::PublicKey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
     /// ~~~
     #[inline]
     fn from_hex_str(key_str: &str) -> PublicKey {
