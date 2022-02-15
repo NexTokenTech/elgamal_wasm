@@ -11,6 +11,9 @@ use mt19937;
 pub trait KeyFormat {
     fn print_parameter(&self);
     fn from_hex_str(key_str: &str) -> Self;
+    fn p_str_value(&self) -> String;
+    fn g_str_value(&self) -> String;
+    fn h_str_value(&self) -> String;
 }
 
 /// init private key structure for elgamal encryption.
@@ -37,6 +40,7 @@ impl KeyFormat for PublicKey {
         println!("g:{}", self.g);
         println!("h:{}", self.h);
     }
+
     /// generate public_key from special string
     /// # Example
     /// ~~~
@@ -65,6 +69,20 @@ impl KeyFormat for PublicKey {
             bit_length,
         }
     }
+
+    #[inline]
+    fn p_str_value(&self) -> String {
+        self.p.to_string()
+    }
+
+    #[inline]
+    fn g_str_value(&self) -> String {
+        self.g.to_string()
+    }
+    #[inline]
+    fn h_str_value(&self) -> String {
+        self.h.to_string()
+    }
 }
 
 ///generate public_key with seed、bit_length、i_confidence
@@ -85,16 +103,16 @@ impl KeyFormat for PublicKey {
 /// h = g ^ x mod p
 /// ```
 pub fn generate_pub_key(
-    seed: &BigInt,
+    seed: &Vec<u32>,
     bit_length: u32,
     i_confidence: u32,
 ) -> Result<(PublicKey, mt19937::MT19937), &'static str> {
-    let key = seed.to_u32_digits();
-    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+    // let key = seed.to_u32_digits();
+    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val = elgamal_utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
-    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val1 = elgamal_utils::find_primitive_root_bigint(&val, &mut rng);
-    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+    let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val2 = elgamal_utils::find_h_bigint(&val, &mut rng);
     let pubkey: PublicKey = PublicKey {
         p: val,
@@ -165,7 +183,7 @@ pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &
 /// z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
 /// where m[i] is the ith message byte
 /// ```
-pub fn encode_utf16(s_plaintext: &str, bit_length: u32) -> Vec<BigInt> {
+fn encode_utf16(s_plaintext: &str, bit_length: u32) -> Vec<BigInt> {
     let mut byte_array: Vec<u8> = UTF_16LE.encode(s_plaintext, EncoderTrap::Strict).unwrap();
     byte_array.insert(0, 254);
     byte_array.insert(0, 255);
