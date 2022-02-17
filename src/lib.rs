@@ -14,9 +14,16 @@ pub mod elgamal_utils;
 
 #[cfg(test)]
 mod tests {
-    use crate::{elgamal, elgamal_utils};
-    use rand_core::RngCore;
+    use crate::elgamal;
     use crate::elgamal::*;
+    use rand_core::RngCore;
+
+    //TODO: convert String to Vec<u32>
+    #[test]
+    fn test_string_to_vecu32(){
+        let big_num = "833050814021254693158343911234888353695402778102174580258852673738983005".as_bytes();
+        println!("~~~~~~~~~~~~~~~~{:?}",big_num);
+    }
     #[test]
     fn test_rng() {
         let seed:Vec<u32> = vec![3903800925, 2970875772, 2545702139, 2279902533, 3917580227, 2452829718, 2456858852, 30899];
@@ -31,22 +38,8 @@ mod tests {
         if public_key_result.is_ok() {
             let result = public_key_result.unwrap();
             let pubkey = result.0;
-            pubkey.print_parameter();
-            assert_eq!(
-                "8182",
-                pubkey.g_str_value(),
-                "Public key g part is not correct!"
-            );
-            assert_eq!(
-                "405406",
-                pubkey.h_str_value(),
-                "Public key h part is not correct!"
-            );
-            assert_eq!(
-                "754739",
-                pubkey.p_str_value(),
-                "Public key p part is not correct!"
-            );
+            assert_eq!("(754739, 8182, 405406)".to_owned(),
+                       format!("{}", pubkey));
         }
     }
     #[test]

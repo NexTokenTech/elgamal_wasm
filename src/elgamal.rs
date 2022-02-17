@@ -6,14 +6,11 @@ use const_num_bigint::{BigInt, BigUint};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
 use mt19937;
+use std::fmt;
 
 /// trait for printing some struct
 pub trait KeyFormat {
-    fn print_parameter(&self);
     fn from_hex_str(key_str: &str) -> Self;
-    fn p_str_value(&self) -> String;
-    fn g_str_value(&self) -> String;
-    fn h_str_value(&self) -> String;
 }
 
 /// init private key structure for elgamal encryption.
@@ -31,16 +28,13 @@ pub struct PublicKey {
     pub bit_length: u32,
 }
 
-impl KeyFormat for PublicKey {
-    ///trait for printing public_key's p、g、h or private_key's p、g、x
-    #[inline]
-    fn print_parameter(&self) {
-        println!("_____________");
-        println!("p:{}", self.p);
-        println!("g:{}", self.g);
-        println!("h:{}", self.h);
+impl fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.p, self.g,self.h)
     }
+}
 
+impl KeyFormat for PublicKey {
     /// generate public_key from special string
     /// # Example
     /// ~~~
@@ -68,20 +62,6 @@ impl KeyFormat for PublicKey {
             h,
             bit_length,
         }
-    }
-
-    #[inline]
-    fn p_str_value(&self) -> String {
-        self.p.to_string()
-    }
-
-    #[inline]
-    fn g_str_value(&self) -> String {
-        self.g.to_string()
-    }
-    #[inline]
-    fn h_str_value(&self) -> String {
-        self.h.to_string()
     }
 }
 
