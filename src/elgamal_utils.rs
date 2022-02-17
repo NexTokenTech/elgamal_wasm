@@ -1,15 +1,14 @@
-///elgamal_utils mod
-/// use for supporting elgamal public_key generating
-/// generate p: a big prime
-/// generate g: a prime root
-/// generate h: a random from seed
-use mt19937::MT19937;
+//!elgamal_utils mod
+//! use for supporting elgamal public_key generating
+//! generate p: a big prime
+//! generate g: a prime root
+//! generate h: a random from seed
 use mt19937;
+use mt19937::MT19937;
 
-use num::traits::{Zero,One};
-use num::{Integer, ToPrimitive};
 use const_num_bigint::*;
-
+use num::traits::{One, Zero};
+use num::{Integer, ToPrimitive};
 
 /// const for 0,1 ..
 const BIGINT_0: &'static BigInt = bigint!("0");
@@ -23,6 +22,12 @@ const BIGINT_7: &'static BigInt = bigint!("7");
 const BIGINT_8: &'static BigInt = bigint!("8");
 
 /** These real versions are due to Kaisuki, 2021/01/07 added */
+/// random generator for bigint
+/// # Example
+/// ```rust
+/// use elgamal_wasm::elgamal_utils;
+/// g = elgamal_utils::gen_bigint_range(r, &range_num_low, &range_num_high);
+/// ```
 pub fn gen_bigint_range<R: rand_core::RngCore>(
     rng: &mut R,
     start: &BigInt,
@@ -37,14 +42,14 @@ pub fn gen_bigint_range<R: rand_core::RngCore>(
     return start + r;
 }
 
-/// Return an integer with k random bits.
-///
-///             Args:
-///             rng: the mt19937 random rng.
-///             k: bit_length
-///
-///         Returns:
-///             A BigInt for random algorithm.
+/// Return an integer with k random bits with mt19937 random rng.
+/// # Example
+/// ```rust
+/// use const_num_bigint::*;
+/// let width: BigInt = stop + 1 - start;///
+/// let k: u64 = width.bits(); // don't use (n-1) here because n can be 1///
+/// let mut r: BigInt = getrandbits(rng, k as usize);
+/// ```
 fn getrandbits<R: rand_core::RngCore>(rng: &mut R, k: usize) -> BigInt {
     if k == 0 {
         return BigInt::from_slice(Sign::NoSign, &[0]);
@@ -88,20 +93,14 @@ fn getrandbits<R: rand_core::RngCore>(rng: &mut R, k: usize) -> BigInt {
 }
 
 ///Find a prime number p for elgamal public key.
-///
-///             Args:
-///             bit_length: number of binary bits for the prime number.
-///             i_confidence:
-///             seed: random generator seed
-///
-///         Returns:
-///             A prime number with requested length of bits in binary.
+/// # Example
+/// ```rust
+/// let key = seed.to_u32_digits();
+/// let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+/// let val = elgamal_utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
+///```
 #[allow(unused)]
-pub fn random_prime_bigint(
-    bit_length: u32,
-    i_confidence: u32,
-    r: &mut mt19937::MT19937,
-) -> BigInt {
+pub fn random_prime_bigint(bit_length: u32, i_confidence: u32, r: &mut mt19937::MT19937) -> BigInt {
     //keep testing until one is found
     loop {
         // generate potential prime randomly
@@ -127,6 +126,14 @@ pub fn random_prime_bigint(
     }
 }
 
+
+///generate a prime for bigint
+/// # Example
+/// ```rust
+/// let key = seed.to_u32_digits();
+/// let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+/// let p = gen_prime(&bit_length, rng);
+///```
 fn gen_prime(bit_length: &u32, r: &mut mt19937::MT19937) -> BigInt {
     let base: BigInt = BigInt::from(2);
     let pow_num_low: BigInt = BigInt::from(bit_length - 2);
@@ -138,18 +145,16 @@ fn gen_prime(bit_length: &u32, r: &mut mt19937::MT19937) -> BigInt {
 }
 
 ///Finds a primitive root for prime p.
-///         This function was implemented from the algorithm described here:
-///         http://modular.math.washington.edu/edu/2007/spring/ent/ent-html/node31.html
 ///
-///         Args:
-///             p:
-///             seed:
-///
-///         Returns:
-///             A primitive root for prime p.
-/// the prime divisors of p-1 are 2 and (p-1)/2 because
-/// p = 2x + 1 where x is a prime
-pub fn find_primitive_root_bigint(p: &BigInt,r: &mut mt19937::MT19937) -> BigInt {
+/// This function was implemented from the algorithm described here:
+/// http://modular.math.washington.edu/edu/2007/spring/ent/ent-html/node31.html
+/// # Example
+/// ```rust
+/// let key = seed.to_u32_digits();
+/// let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+/// let g = elgamal_utils::find_primitive_root_bigint(&val, &mut rng);
+/// ```
+pub fn find_primitive_root_bigint(p: &BigInt, r: &mut mt19937::MT19937) -> BigInt {
     //if p == 2: return 1
     if *p == *BIGINT_2 {
         return BIGINT_1.clone();
@@ -175,7 +180,14 @@ pub fn find_primitive_root_bigint(p: &BigInt,r: &mut mt19937::MT19937) -> BigInt
     }
 }
 
-pub fn find_h_bigint(p: &BigInt,r: &mut mt19937::MT19937) -> BigInt {
+/// generate h for public_key
+/// # Example
+/// ```rust
+/// let key = seed.to_u32_digits();
+/// let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&key.1);
+/// let h = elgamal_utils::find_h_bigint(&val, &mut rng);
+/// ```
+pub fn find_h_bigint(p: &BigInt, r: &mut mt19937::MT19937) -> BigInt {
     let one: BigInt = One::one();
     let range_num_low: BigInt = One::one();
     let range_num_high: BigInt = p - &one;
@@ -186,13 +198,12 @@ pub fn find_h_bigint(p: &BigInt,r: &mut mt19937::MT19937) -> BigInt {
 /// Solovay-strassen primality test.
 ///     This function tests if num is prime.
 ///     http://www-math.ucdenver.edu/~wcherowi/courses/m5410/ctcprime.html
-///
-///     Args:
-///     num: input integer
-///     i_confidence:
-///     r:random rng
-///
-///     Returns:
+/// # Example
+/// ```rust
+/// use elgamal_wasm::elgamal;
+/// elgamal::solovay_strassen(&p, i_confidence, r);
+/// ```
+/// # Annotation
 /// if pass the test
 /// ensure confidence of t
 pub fn solovay_strassen(num: &BigInt, i_confidence: u32, r: &mut MT19937) -> bool {
@@ -220,16 +231,15 @@ pub fn solovay_strassen(num: &BigInt, i_confidence: u32, r: &mut MT19937) -> boo
 }
 
 /// Computes the jacobi symbol of a, n.
-///
-///     Args:
-///     a:
-///     n:
-///
-///     Returns:
+/// # Example
+/// ```rust
+/// use elgamal_wasm::elgamal;
+/// elgamal::jacobi(&a, num);
+/// ```
 pub fn jacobi(a: &BigInt, n: &BigInt) -> BigInt {
-    if a.to_i64().is_none(){
-        jacobi_match_else(a,n)
-    }else{
+    if a.to_i64().is_none() {
+        jacobi_match_else(a, n)
+    } else {
         let a_f64_value = a.to_i64().unwrap();
         return match a_f64_value {
             0 => {
@@ -246,46 +256,44 @@ pub fn jacobi(a: &BigInt, n: &BigInt) -> BigInt {
                     BIGINT_R1.clone()
                 }
             }
-            1 => {
-                BIGINT_1.clone()
-            }
+            1 => BIGINT_1.clone(),
             2 => {
                 if (n.mod_floor(&BIGINT_8) == *BIGINT_1) || (n.mod_floor(&BIGINT_8) == *BIGINT_7) {
                     BIGINT_1.clone()
-                } else if (n.mod_floor(&BIGINT_8) == *BIGINT_3) || (n.mod_floor(&BIGINT_8) == *BIGINT_5) {
+                } else if (n.mod_floor(&BIGINT_8) == *BIGINT_3)
+                    || (n.mod_floor(&BIGINT_8) == *BIGINT_5)
+                {
                     BIGINT_R1.clone()
                 } else {
                     BIGINT_0.clone()
                 }
             }
-            _ => {
-                jacobi_match_else(a,n)
-            }
+            _ => jacobi_match_else(a, n),
         };
     }
 }
 
 /// Computes the jacobi symbol of a, n.If don't match any pattern or a cannot convert to i64
-///
-///     Args:
-///     a:
-///     n:
-///
-///     Returns:
-pub fn jacobi_match_else(a: &BigInt, n: &BigInt) -> BigInt{
-    if a > n{
+fn jacobi_match_else(a: &BigInt, n: &BigInt) -> BigInt {
+    if a > n {
         let tmp_a = a.mod_floor(n);
         jacobi(&tmp_a, n)
-    }else if a.mod_floor(&BIGINT_2) == *BIGINT_0 {
+    } else if a.mod_floor(&BIGINT_2) == *BIGINT_0 {
         let tmp_a2 = a / BIGINT_2;
         jacobi(&BIGINT_2, n) * jacobi(&tmp_a2, n)
-    }else if (a.mod_floor(&BIGINT_4) == *BIGINT_3) && (n.mod_floor(&BIGINT_4) == *BIGINT_3) {
+    } else if (a.mod_floor(&BIGINT_4) == *BIGINT_3) && (n.mod_floor(&BIGINT_4) == *BIGINT_3) {
         BIGINT_R1 * jacobi(n, a)
     } else {
         jacobi(n, a)
     }
 }
 
+/// pow operation for bigint
+/// # Example
+/// ```rust
+/// use elgamal_wasm::elgamal_utils;
+/// let low = elgamal_utils::pow_bigint(&base, &pow_num_low);
+///```
 pub fn pow_bigint(base: &BigInt, exponent: &BigInt) -> BigInt {
     let zero: BigInt = Zero::zero();
     let one: BigInt = One::one();
