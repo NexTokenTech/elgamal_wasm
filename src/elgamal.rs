@@ -1,7 +1,7 @@
 //! elgamal mod
 //! this is a utils for elgamal security algorithm
 //! use for generating public_key
-use crate::elgamal_utils;
+use crate::utils;
 use const_num_bigint::{BigInt, BigUint};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
@@ -30,7 +30,7 @@ pub struct PublicKey {
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.p, self.g,self.h)
+        write!(f, "({}, {}, {})", self.p, self.g, self.h)
     }
 }
 
@@ -38,9 +38,9 @@ impl KeyFormat for PublicKey {
     /// generate public_key from special string
     /// # Example
     /// ~~~
-    /// use elgamal_wasm::elgamal::PublicKey;
-    /// use elgamal_wasm::elgamal::KeyFormat;
-    /// let pub_key::PublicKey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
+    /// use elgamal_wasm::PublicKey;
+    /// use elgamal_wasm::KeyFormat;
+    /// let pub_key:PublicKey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
     /// ~~~
     #[inline]
     fn from_hex_str(key_str: &str) -> PublicKey {
@@ -67,14 +67,6 @@ impl KeyFormat for PublicKey {
 
 ///generate public_key with seed、bit_length、i_confidence
 ///Generates public key K1 (p, g, h) and private key K2 (p, g, x).
-/// # Example
-/// ```rust
-/// use elgamal_wasm::elgamal;
-/// let big_num = BigInt::from(2929);
-/// let tuple = elgamal::generate_pub_key(&big_num,32,32);
-/// let pubkey = tuple.0;
-/// let mt19937 = tuple.1;
-/// ```
 /// # Logic Desc
 /// ```javascript
 /// p is the prime
@@ -89,11 +81,11 @@ pub fn generate_pub_key(
 ) -> Result<(PublicKey, mt19937::MT19937), &'static str> {
     // let key = seed.to_u32_digits();
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
-    let val = elgamal_utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
+    let val = utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
-    let val1 = elgamal_utils::find_primitive_root_bigint(&val, &mut rng);
+    let val1 = utils::find_primitive_root_bigint(&val, &mut rng);
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
-    let val2 = elgamal_utils::find_h_bigint(&val, &mut rng);
+    let val2 = utils::find_h_bigint(&val, &mut rng);
     let pubkey: PublicKey = PublicKey {
         p: val,
         g: val1,
@@ -107,10 +99,13 @@ pub fn generate_pub_key(
 ///
 /// # Example
 /// ```rust
-/// use elgamal_wasm::elgamal;
-/// let pubkey = pubkey_turple.0;
+/// use elgamal_wasm as elgamal;
+/// use num::bigint::BigUint;
+/// let big_num = BigUint::from(2929u32);
+/// let tuple = elgamal::generate_pub_key(&big_num.to_u32_digits(),32,32).unwrap();
+/// let pubkey = tuple.0;
 /// let msg = "message for encrypt";
-/// let mut rng: mt19937::MT19937 = pubkey_turple.1;
+/// let mut rng: mt19937::MT19937 = tuple.1;
 /// let result = elgamal::encrypt(&pubkey, &msg, &mut rng);
 /// ```
 /// # Logic Desc
@@ -126,7 +121,7 @@ pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &
     // i is an integer in z
     for i_code in z {
         // pick random y from (0, p-1) inclusive
-        let y = elgamal_utils::gen_bigint_range(rng, &BigInt::from(0), &(&key.p));
+        let y = utils::gen_bigint_range(rng, &BigInt::from(0), &(&key.p));
         // c = g^y mod p
         let c = key.g.modpow(&y, &key.p);
         // d = ih^y mod p
@@ -154,8 +149,8 @@ pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &
 /// Encodes bytes to integers mod p.
 /// # Example
 /// ```rust
-/// use elgamal_wasm::elgamal;
-/// let z = elgamal::encode_utf16(s_plaintext, key.bit_length);
+/// use elgamal_wasm as elgamal;
+/// let z = elgamal::encode_utf16("test", 32);
 /// ```
 /// # Logic Desc
 /// ```javascript
@@ -163,7 +158,7 @@ pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &
 /// z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
 /// where m[i] is the ith message byte
 /// ```
-fn encode_utf16(s_plaintext: &str, bit_length: u32) -> Vec<BigInt> {
+pub fn encode_utf16(s_plaintext: &str, bit_length: u32) -> Vec<BigInt> {
     let mut byte_array: Vec<u8> = UTF_16LE.encode(s_plaintext, EncoderTrap::Strict).unwrap();
     byte_array.insert(0, 254);
     byte_array.insert(0, 255);
