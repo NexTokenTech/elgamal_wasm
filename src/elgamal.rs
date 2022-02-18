@@ -2,10 +2,10 @@
 //! this is a utils for elgamal security algorithm
 //! use for generating public_key
 use crate::utils;
-use const_num_bigint::{BigInt, BigUint};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
 use mt19937;
+use num_bigint::{BigInt, BigUint};
 use std::fmt;
 
 /// trait for printing some struct
@@ -100,7 +100,7 @@ pub fn generate_pub_key(
 /// # Example
 /// ```rust
 /// use elgamal_wasm as elgamal;
-/// use num::bigint::BigUint;
+/// use num_bigint::BigUint;
 /// let big_num = BigUint::from(2929u32);
 /// let tuple = elgamal::generate_pub_key(&big_num.to_u32_digits(),32,32).unwrap();
 /// let pubkey = tuple.0;

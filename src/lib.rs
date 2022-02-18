@@ -9,7 +9,6 @@
 //! let pubkey = tuple.0;
 //! let mt19937 = tuple.1;
 //! ```
-
 mod elgamal;
 pub use crate::elgamal::*;
 pub mod utils;
@@ -21,7 +20,7 @@ mod tests {
 
     //TODO: convert String to Vec<u32>
     #[test]
-    fn test_string_to_vecu32() {
+    fn test_string_to_vec_u32() {
         let big_num =
             "833050814021254693158343911234888353695402778102174580258852673738983005".as_bytes();
         println!("~~~~~~~~~~~~~~~~{:?}", big_num);
