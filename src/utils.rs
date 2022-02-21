@@ -269,3 +269,12 @@ pub fn pow_bigint(base: &BigInt, exponent: &BigInt) -> BigInt {
     }
     result
 }
+
+/// for string to vec32 for bigint
+pub fn vec32_from_string(bigint_str:&str) -> Vec<u32>{
+    let big_num = bigint_str
+        .parse::<BigInt>()
+        .unwrap();
+    let key = big_num.to_u32_digits();
+    return key.1;
+}

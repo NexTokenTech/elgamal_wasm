@@ -68,12 +68,13 @@ impl KeyFormat for PublicKey {
 ///generate public_key with seed、bit_length、i_confidence
 ///Generates public key K1 (p, g, h) and private key K2 (p, g, x).
 /// # Logic Desc
-/// ```javascript
 /// p is the prime
+///
 /// g is the primitive root
+///
 /// x is random in (0, p-1) inclusive
+///
 /// h = g ^ x mod p
-/// ```
 pub fn generate_pub_key(
     seed: &Vec<u32>,
     bit_length: u32,
@@ -109,11 +110,11 @@ pub fn generate_pub_key(
 /// let result = elgamal::encrypt(&pubkey, &msg, &mut rng);
 /// ```
 /// # Logic Desc
-/// ```javascript
 /// if n = 24, k = n / 8 = 3
+///
 /// z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
+///
 /// where m[i] is the ith message byte
-/// ```
 pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &mut R) -> String {
     let z = encode_utf16(s_plaintext, key.bit_length);
     // cipher_pairs list will hold pairs (c, d) corresponding to each integer in z
@@ -153,11 +154,12 @@ pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &
 /// let z = elgamal::encode_utf16("test", 32);
 /// ```
 /// # Logic Desc
-/// ```javascript
 /// if n = 24, k = n / 8 = 3
+///
 /// z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
+///
 /// where m[i] is the ith message byte
-/// ```
+
 pub fn encode_utf16(s_plaintext: &str, bit_length: u32) -> Vec<BigInt> {
     let mut byte_array: Vec<u8> = UTF_16LE.encode(s_plaintext, EncoderTrap::Strict).unwrap();
     byte_array.insert(0, 254);
