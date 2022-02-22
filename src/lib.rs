@@ -11,11 +11,14 @@
 //! ```
 mod elgamal;
 pub use crate::elgamal::*;
+pub mod generic;
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
     use crate::elgamal::*;
+    use crate::generic::PublicKey;
+    use num_bigint::BigInt;
     use rand_core::RngCore;
 
     //TODO: convert String to Vec<u32>
@@ -50,7 +53,7 @@ mod tests {
     }
     #[test]
     fn test_encrypt() {
-        let pubkey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
+        let pubkey = PublicKey::<BigInt>::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
         let seed: Vec<u32> = vec![
             3903800925, 2970875772, 2545702139, 2279902533, 3917580227, 2452829718, 2456858852,
             30899,
