@@ -20,7 +20,6 @@ pub mod utils;
 mod tests {
     use crate::elgamal::*;
     use crate::generic::PublicKey;
-    use num_bigint::BigInt;
     use rand_core::RngCore;
     use crate::utils::{vec32_from_string};
 
@@ -29,6 +28,7 @@ mod tests {
         let big_value = vec32_from_string(big_num);
         big_value
     }
+
     #[test]
     fn test_rng() {
         let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed());
@@ -46,11 +46,10 @@ mod tests {
     }
     #[test]
     fn test_encrypt() {
-        let pubkey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
+        let pubkey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32").unwrap();
         let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed());
         let msg = "message";
-        let result = encrypt(&pubkey, &msg, &mut rng);
-        print!("~~~~~~~~~~~~~~~~~~~{}", result);
+        let result = encrypt(&pubkey, &msg, &mut rng).unwrap();
         assert_eq!(
             "1954317782 623638905 1 1335914958 1954317782 1931457661 1 1068518055 ", result,
             "Encrypt result is not correct!"
