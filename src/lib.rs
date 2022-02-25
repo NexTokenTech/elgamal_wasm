@@ -13,11 +13,14 @@
 //! ```
 mod elgamal;
 pub use crate::elgamal::*;
+pub mod generic;
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
     use crate::elgamal::*;
+    use crate::generic::PublicKey;
+    use num_bigint::BigInt;
     use rand_core::RngCore;
     use crate::utils::{vec32_from_string};
 

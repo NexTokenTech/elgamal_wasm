@@ -1,6 +1,7 @@
 //! elgamal mod
 //! this is a utils for elgamal security algorithm
 //! use for generating public_key
+use crate::generic::PublicKey;
 use crate::utils;
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
@@ -13,37 +14,23 @@ pub trait KeyFormat {
     fn from_hex_str(key_str: &str) -> Self;
 }
 
-/// init private key structure for elgamal encryption.
-pub struct PrivateKey {
-    pub p: BigInt,
-    pub g: BigInt,
-    pub x: BigInt,
-}
-
-/// Init public key structure for elgamal encryption.
-pub struct PublicKey {
-    pub p: BigInt,
-    pub g: BigInt,
-    pub h: BigInt,
-    pub bit_length: u32,
-}
-
-impl fmt::Display for PublicKey {
+impl fmt::Display for PublicKey<BigInt> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {}, {})", self.p, self.g, self.h)
     }
 }
 
-impl KeyFormat for PublicKey {
+impl KeyFormat for PublicKey<BigInt> {
     /// generate public_key from special string
     /// # Example
     /// ~~~
-    /// use elgamal_wasm::PublicKey;
+    /// use elgamal_wasm::generic::PublicKey;
     /// use elgamal_wasm::KeyFormat;
-    /// let pub_key:PublicKey = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
+    /// use num_bigint::BigInt;
+    /// let pub_key:PublicKey<BigInt> = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
     /// ~~~
     #[inline]
-    fn from_hex_str(key_str: &str) -> PublicKey {
+    fn from_hex_str(key_str: &str) -> PublicKey<BigInt> {
         let keys: Vec<_> = key_str.split(", ").collect();
         println!("keys~~~~~~~~~~~~~~~~{:?}", keys);
         if keys.len() < 3 {
@@ -79,7 +66,7 @@ pub fn generate_pub_key(
     seed: &Vec<u32>,
     bit_length: u32,
     i_confidence: u32,
-) -> Result<(PublicKey, mt19937::MT19937), &'static str> {
+) -> Result<(PublicKey<BigInt>, mt19937::MT19937), &'static str> {
     // let key = seed.to_u32_digits();
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val = utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
@@ -87,7 +74,7 @@ pub fn generate_pub_key(
     let val1 = utils::find_primitive_root_bigint(&val, &mut rng);
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val2 = utils::find_h_bigint(&val, &mut rng);
-    let pubkey: PublicKey = PublicKey {
+    let pubkey: PublicKey<BigInt> = PublicKey {
         p: val,
         g: val1,
         h: val2,
@@ -115,7 +102,12 @@ pub fn generate_pub_key(
 /// z[0] = (summation from i = 0 to i = k)m[i]*(2^(8*i))
 ///
 /// where m[i] is the ith message byte
-pub fn encrypt<R: rand_core::RngCore>(key: &PublicKey, s_plaintext: &str, rng: &mut R) -> String {
+/// ```
+pub fn encrypt<R: rand_core::RngCore>(
+    key: &PublicKey<BigInt>,
+    s_plaintext: &str,
+    rng: &mut R,
+) -> String {
     let z = encode_utf16(s_plaintext, key.bit_length);
     // cipher_pairs list will hold pairs (c, d) corresponding to each integer in z
     let mut cipher_pairs = vec![];
