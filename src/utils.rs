@@ -67,7 +67,6 @@ fn getrandbits<R: rand_core::RngCore>(rng: &mut R, k: usize) -> BigInt {
 }
 
 ///Find a prime number p for elgamal public key.
-#[allow(unused)]
 pub fn random_prime_bigint(bit_length: u32, i_confidence: u32, r: &mut mt19937::MT19937) -> BigInt {
     let big_int_0 = BigInt::from(0);
     let big_int_1 = BigInt::from(1);
