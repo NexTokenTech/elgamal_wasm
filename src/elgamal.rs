@@ -7,51 +7,11 @@ use codec::{Decode, Encode};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
 use mt19937;
-use num_bigint::{BigInt, BigUint, Sign};
+use num_bigint::{BigInt, Sign};
 use rand_core::RngCore;
 use sp_core::U256;
-use std::fmt;
 
 pub type KeyWithRng = (PublicKey<BigInt>, mt19937::MT19937);
-
-/// trait for printing some struct
-pub trait KeyFormat {
-    fn from_hex_str(key_str: &str) -> Self;
-}
-
-impl fmt::Display for PublicKey<BigInt> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.p, self.g, self.h)
-    }
-}
-
-impl KeyFormat for PublicKey<BigInt> {
-    /// generate public_key from special string
-    /// # Example
-    /// ~~~
-    /// use elgamal_wasm::generic::PublicKey;
-    /// use elgamal_wasm::KeyFormat;
-    /// use num_bigint::BigInt;
-    /// let pub_key:PublicKey<BigInt> = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
-    /// ~~~
-    #[inline]
-    fn from_hex_str(key_str: &str) -> PublicKey<BigInt> {
-        let keys: Vec<_> = key_str.split(", ").collect();
-        let p =
-            BigInt::from(BigUint::parse_bytes(keys[0].replace("0x", "").as_bytes(), 16).unwrap());
-        let g =
-            BigInt::from(BigUint::parse_bytes(keys[1].replace("0x", "").as_bytes(), 16).unwrap());
-        let h =
-            BigInt::from(BigUint::parse_bytes(keys[2].replace("0x", "").as_bytes(), 16).unwrap());
-        let bit_length = keys[3].parse::<u32>().unwrap();
-        PublicKey {
-            p,
-            g,
-            h,
-            bit_length,
-        }
-    }
-}
 
 /// Generate a seed data slice from a key data.
 pub trait Seed {

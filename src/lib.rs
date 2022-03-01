@@ -1,25 +1,54 @@
 #![feature(slice_pattern)]
 //! elgamal_wasm
-//! this is a third part for elgamal security algorithm
-//! use for generating public_key and so on
-//! ## Example
-//! ```rust
-//! use elgamal_wasm as elgamal;
-//! let seed:Vec<u32> = vec![3903800925, 2970875772, 2545702139, 2279902533, 3917580227, 2452829718, 2456858852, 30899];
-//! let tuple = elgamal::generate_pub_key(&seed,32,32);
-//! let pubkey = tuple.0;
-//! let mt19937 = tuple.1;
-//! ```
-extern crate core;
-
+//! This is a third part for elgamal security algorithm
+//! used for generating public keys for elgamal systems and etc.
 mod elgamal;
-
 pub use crate::elgamal::*;
-use crate::generic::PublicKey;
-use num_bigint::BigInt;
-
 pub mod generic;
 pub mod utils;
+
+use crate::generic::PublicKey;
+use num_bigint::{BigInt, BigUint};
+use std::fmt;
+
+impl fmt::Display for PublicKey<BigInt> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.p, self.g, self.h)
+    }
+}
+
+/// trait for printing some struct
+pub trait KeyFormat {
+    fn from_hex_str(key_str: &str) -> Self;
+}
+
+impl KeyFormat for PublicKey<BigInt> {
+    /// generate public_key from special string
+    /// # Example
+    /// ~~~
+    /// use elgamal_wasm::generic::PublicKey;
+    /// use elgamal_wasm::KeyFormat;
+    /// use num_bigint::BigInt;
+    /// let pub_key:PublicKey<BigInt> = PublicKey::from_hex_str("0x747c85d7, 0x747c85d6, 0xb2040843, 32");
+    /// ~~~
+    #[inline]
+    fn from_hex_str(key_str: &str) -> PublicKey<BigInt> {
+        let keys: Vec<_> = key_str.split(", ").collect();
+        let p =
+            BigInt::from(BigUint::parse_bytes(keys[0].replace("0x", "").as_bytes(), 16).unwrap());
+        let g =
+            BigInt::from(BigUint::parse_bytes(keys[1].replace("0x", "").as_bytes(), 16).unwrap());
+        let h =
+            BigInt::from(BigUint::parse_bytes(keys[2].replace("0x", "").as_bytes(), 16).unwrap());
+        let bit_length = keys[3].parse::<u32>().unwrap();
+        PublicKey {
+            p,
+            g,
+            h,
+            bit_length,
+        }
+    }
+}
 
 /// Rust generator is not yet stable, use self-defined generator trait.
 pub trait KeyGenerator {
@@ -48,6 +77,7 @@ impl KeyGenerator for PublicKey<BigInt> {
 mod tests {
     use crate::elgamal::*;
     use crate::generic::{Encryption, PublicKey};
+    use crate::*;
     use crate::{KeyGenerator, RawKey, RawPublicKey};
     use codec::{Decode, Encode};
     use num_bigint::BigInt;
