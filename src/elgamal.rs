@@ -1,12 +1,13 @@
 //! elgamal mod
 //! this is a utils for elgamal security algorithm
 //! use for generating public_key
-use crate::generic::PublicKey;
+use crate::generic::{PublicKey, RawBytes, RawPublicKey, Seed};
 use crate::utils;
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
 use mt19937;
-use num_bigint::{BigInt, BigUint};
+use num_bigint::{BigInt, BigUint, Sign};
+use sp_core::U256;
 use std::fmt;
 
 /// trait for printing some struct
@@ -32,10 +33,6 @@ impl KeyFormat for PublicKey<BigInt> {
     #[inline]
     fn from_hex_str(key_str: &str) -> PublicKey<BigInt> {
         let keys: Vec<_> = key_str.split(", ").collect();
-        println!("keys~~~~~~~~~~~~~~~~{:?}", keys);
-        if keys.len() < 3 {
-            println!("The input string is not valid")
-        }
         let p =
             BigInt::from(BigUint::parse_bytes(keys[0].replace("0x", "").as_bytes(), 16).unwrap());
         let g =
@@ -52,6 +49,40 @@ impl KeyFormat for PublicKey<BigInt> {
     }
 }
 
+impl Seed for PublicKey<BigInt> {
+    fn yield_seed_slice(&self) -> Vec<u32> {
+        let sum = &self.p + &self.h + &self.g;
+        sum.to_u32_digits().1
+    }
+}
+
+impl RawBytes<BigInt> for PublicKey<BigInt> {
+    fn to_bytes(self) -> RawPublicKey {
+        RawPublicKey {
+            p: U256::from_little_endian(self.p.to_bytes_le().1.as_slice()),
+            g: U256::from_little_endian(self.g.to_bytes_le().1.as_slice()),
+            h: U256::from_little_endian(self.h.to_bytes_le().1.as_slice()),
+            bit_length: self.bit_length,
+        }
+    }
+
+    fn from_bytes(raw_key: &RawPublicKey) -> Self {
+        let mut num: [u8; 32] = [0u8; 32];
+        raw_key.p.to_little_endian(&mut num);
+        let p = BigInt::from_bytes_le(Sign::Plus, &num.to_vec());
+        raw_key.g.to_little_endian(&mut num);
+        let g = BigInt::from_bytes_le(Sign::Plus, &num.to_vec());
+        raw_key.h.to_little_endian(&mut num);
+        let h = BigInt::from_bytes_le(Sign::Plus, &num.to_vec());
+        PublicKey::<BigInt> {
+            p,
+            g,
+            h,
+            bit_length: raw_key.bit_length,
+        }
+    }
+}
+
 ///generate public_key with seed、bit_length、i_confidence
 ///Generates public key K1 (p, g, h) and private key K2 (p, g, x).
 /// # Logic Desc
@@ -62,11 +93,10 @@ impl KeyFormat for PublicKey<BigInt> {
 /// h = g ^ x mod p
 /// ```
 pub fn generate_pub_key(
-    seed: &Vec<u32>,
+    seed: &[u32],
     bit_length: u32,
     i_confidence: u32,
 ) -> Result<(PublicKey<BigInt>, mt19937::MT19937), &'static str> {
-    // let key = seed.to_u32_digits();
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
     let val = utils::random_prime_bigint(bit_length, i_confidence, &mut rng);
     let mut rng: mt19937::MT19937 = mt19937::MT19937::new_with_slice_seed(&seed);
