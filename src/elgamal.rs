@@ -5,11 +5,11 @@ use crate::generic::{Decryption, Encryption, PrivateKey, PublicKey};
 use crate::utils;
 use codec::{Decode, Encode};
 use encoding::all::UTF_16LE;
-use encoding::{EncoderTrap, Encoding};
+use encoding::{DecoderTrap, EncoderTrap, Encoding};
 use mt19937;
 use num_bigint::{BigInt, Sign};
 use num_integer::Integer;
-use num_traits::Num;
+use num_traits::{Num, ToPrimitive};
 use rand_core::RngCore;
 use sp_core::U256;
 
