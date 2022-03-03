@@ -1,13 +1,15 @@
 //! elgamal mod
 //! this is a utils for elgamal security algorithm
 //! use for generating public_key
-use crate::generic::{Encryption, PublicKey};
+use crate::generic::{Decryption, Encryption, PrivateKey, PublicKey};
 use crate::utils;
 use codec::{Decode, Encode};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
 use mt19937;
 use num_bigint::{BigInt, Sign};
+use num_integer::Integer;
+use num_traits::Num;
 use rand_core::RngCore;
 use sp_core::U256;
 
@@ -145,6 +147,51 @@ impl Encryption<BigInt> for String {
     }
 }
 
+impl Decryption<BigInt> for String {
+    ///Performs decryption on the cipher pairs found in Cipher using
+    ///private key K2 and writes the decrypted values to file Plaintext.
+    fn decrypt(&self,key: &PrivateKey<BigInt>) -> Option<String> {
+        // check if the last char is space
+        let mut cipher_chars = self.chars();
+        if let Some(last) = cipher_chars.clone().last() {
+            if last.is_whitespace() {
+                // if the last char is space, removed it from the string.
+                cipher_chars.next_back();
+            }
+        } else {
+            // if the cipher string is empty, return None.
+            return None;
+        }
+        let reduced_str = cipher_chars.as_str();
+        let ciphers = reduced_str.split(" ").collect::<Vec<&str>>();
+
+        let count = ciphers.len();
+        if count % 2 != 0 {
+            return None;
+        }
+        let mut plain_text = Vec::new();
+        for cd in ciphers.chunks(2) {
+            // c = first number in pair
+            let c = cd[0];
+            let c_int = BigInt::from_str_radix(c, STR_RADIX).unwrap();
+            // d = second number in pair
+            let d = cd[1];
+            let d_int = BigInt::from_str_radix(d, STR_RADIX).unwrap();
+            // s = c^x mod p
+            let s = c_int.modpow(&key.x, &key.p);
+            // plaintext integer = ds^-1 mod p
+            let p_2 = &key.p - BigInt::from(2);
+            let mod_exp_s = s.modpow(&p_2, &key.p);
+            let d_by_mod = &d_int * mod_exp_s;
+            let plain_i = d_by_mod.mod_floor(&key.p);
+            // add plain to list of plaintext integers
+            plain_text.push(plain_i);
+            // count the length of the cipher strings
+        }
+        Some(decode_utf16(&plain_text, key.bit_length.clone()))
+    }
+}
+
 /// Encodes bytes to integers mod p.
 /// # Logic Desc
 /// ```text
@@ -184,3 +231,46 @@ fn encode_utf16(plaintext: &str, bit_length: u32) -> Vec<BigInt> {
     }
     z
 }
+
+///Decodes integers to the original message bytes.
+///
+///# Example:
+/// ```text
+/// if "You" were encoded.
+/// Letter        #ASCII
+/// Y              89
+/// o              111
+/// u              117
+/// if the encoded integer is 7696217 and k = 3
+/// m[0] = 7696217 % 256 % 65536 / (2^(8*0)) = 89 = 'Y'
+/// 7696217 - (89 * (2^(8*0))) = 7696128
+/// m[1] = 7696128 % 65536 / (2^(8*1)) = 111 = 'o'
+/// 7696128 - (111 * (2^(8*1))) = 7667712
+/// m[2] = 7667712 / (2^(8*2)) = 117 = 'u'
+/// ```
+pub fn decode_utf16(encoded_ints: &Vec<BigInt>, bit_length: u32) -> String {
+    // bytes vector will hold the decoded original message bytes
+    let mut byte_array: Vec<u8> = Vec::new();
+    // each encoded integer is a linear combination of k message bytes
+    // k must be the number of bits in the prime divided by 8 because each
+    // message byte is 8 bits long
+    let k = bit_length / 8;
+    for num in encoded_ints {
+        let mut temp = num.clone();
+        for i in 0..k {
+            let idx_1 = i + 1;
+            for j in idx_1..k {
+                temp = temp.mod_floor(&BigInt::from(2^(8 * j)));
+            }
+            let two_pow_i = 2^(8 * i);
+            let letter = BigInt::from(&temp / &two_pow_i).to_u8().unwrap();
+            byte_array.push(letter);
+            temp = num - (&(letter as u32) * two_pow_i);
+        }
+    }
+    let raw_text = UTF_16LE.decode(&byte_array, DecoderTrap::Strict).unwrap();
+    // remove the byte order mark (BOM)
+    let stripped_text = raw_text.strip_prefix("\u{feff}").unwrap();
+    stripped_text.to_string()
+}
+

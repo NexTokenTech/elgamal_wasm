@@ -139,4 +139,10 @@ mod tests {
             "Encrypt result is not correct!"
         );
     }
+
+    #[test]
+    fn test_decrypt(){
+        //wait to find a private key and public key to test.
+        todo!();
+    }
 }
