@@ -52,24 +52,27 @@ impl KeyFormat for PublicKey<BigInt> {
 
 /// Rust generator is not yet stable, use self-defined generator trait.
 pub trait KeyGenerator {
+    const CONFIDENCE: u32;
     /// Use current data slices as seed and generate a new public key.
     fn yield_pubkey(&self, bit_length: u32) -> Self;
 }
 
 impl KeyGenerator for RawPublicKey {
+    const CONFIDENCE: u32 = 16;
     fn yield_pubkey(&self, bit_length: u32) -> Self {
         let pubkey_int = PublicKey::<BigInt>::from_raw(self.clone());
         let seed = pubkey_int.yield_seed_slice();
         // NOTE: confidence is hard coded as 32.
-        let new_key = elgamal::generate_pub_key(&seed, bit_length, 32).0;
+        let new_key = elgamal::generate_pub_key(&seed, bit_length, Self::CONFIDENCE).0;
         new_key.to_raw()
     }
 }
 
 impl KeyGenerator for PublicKey<BigInt> {
+    const CONFIDENCE: u32 = 16;
     fn yield_pubkey(&self, bit_length: u32) -> Self {
         let seed = self.yield_seed_slice();
-        elgamal::generate_pub_key(&seed, bit_length, 32).0
+        elgamal::generate_pub_key(&seed, bit_length, Self::CONFIDENCE).0
     }
 }
 
