@@ -100,10 +100,10 @@ pub fn random_prime_bigint(bit_length: u32, i_confidence: u32, r: &mut mt19937::
 ///```
 fn gen_prime(bit_length: &u32, r: &mut mt19937::MT19937) -> BigInt {
     let base: BigInt = BigInt::from(2);
-    let pow_num_low: BigInt = BigInt::from(bit_length - 2);
-    let pow_num_high: BigInt = BigInt::from(bit_length - 1);
-    let low = pow_bigint(&base, &pow_num_low);
-    let high = pow_bigint(&base, &pow_num_high);
+    let pow_num_low: u32 = bit_length - 2;
+    let pow_num_high: u32 = bit_length - 1;
+    let low = base.clone().pow(pow_num_low);
+    let high = base.pow(pow_num_high);
     let p: BigInt = gen_bigint_range(r, &low, &high);
     p
 }
@@ -248,23 +248,4 @@ fn jacobi_match_else(a: &BigInt, n: &BigInt) -> BigInt {
     } else {
         jacobi(n, a)
     }
-}
-
-/// pow operation for bigint
-pub fn pow_bigint(base: &BigInt, exponent: &BigInt) -> BigInt {
-    let zero = BigInt::from(0);
-    let one = BigInt::from(1);
-
-    let mut result: BigInt = one.clone();
-    let mut e: BigInt = exponent.clone();
-    let mut b: BigInt = base.clone();
-
-    while e > zero {
-        if &e & &one == one {
-            result = result * &b;
-        }
-        e = e >> 1;
-        b = &b * &b;
-    }
-    result
 }

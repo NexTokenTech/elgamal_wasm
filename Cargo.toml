@@ -16,6 +16,14 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 ] }
 sp-core = { version = "5.0.0", git = "https://github.com/paritytech/substrate.git", tag = "devhub/latest" }
 
+[dev-dependencies]
+criterion = "0.3"
+pprof = { version = "0.3", features = ["flamegraph"] }
+
+[[bench]]
+name = "pubkey_benchmark"
+harness = false
+
 [features]
 default = ["std"]
 std = [
