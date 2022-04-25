@@ -30,3 +30,9 @@ pub struct PublicKey<I> {
 pub trait Encryption<I> {
     fn encrypt<R: RngCore>(&self, key: &PublicKey<I>, rng: &mut R) -> String;
 }
+
+/// A trait to use private key to decrypt to plaintext
+pub trait  Decryption<I>{
+    fn decrypt(&self,key: &PrivateKey<I>) -> Option<String>;
+}
+
